@@ -1,6 +1,6 @@
 # Heat Transfer PINN
 
-A **Physics-Informed Neural Network (PINN)** for **2D transient heat conduction** on a unit square domain. The network learns the temperature field \(T(x, y, t)\) by minimizing a composite loss that enforces the governing PDE, boundary conditions, and initial condition.
+A **Physics-Informed Neural Network (PINN)** for **2D transient heat conduction** on a unit square domain. The network learns the temperature field $T(x, y, t)$ by minimizing a composite loss that enforces the governing PDE, boundary conditions, and initial condition.
 
 ---
 
@@ -27,11 +27,11 @@ A **Physics-Informed Neural Network** embeds physical laws directly into the tra
 2. **Satisfy boundary conditions (BC)** on the domain boundary.
 3. **Satisfy initial conditions (IC)** at the starting time (for time-dependent problems).
 
-The key idea is to approximate the solution \(u(\mathbf{x})\) with a neural network \(u_\theta(\mathbf{x})\) and use **automatic differentiation** to compute PDE derivatives. The total loss penalizes violations of physics and constraints:
+The key idea is to approximate the solution $u(\mathbf{x})$ with a neural network $u_\theta(\mathbf{x})$ and use **automatic differentiation** to compute PDE derivatives. The total loss penalizes violations of physics and constraints:
 
-\[
-\mathcal{L}(\theta) = \mathcal{L}_{\text{PDE}} + \mathcal{L}_{\text{BC}} + \mathcal{L}_{\text{IC}}
-\]
+$$
+\mathcal{L}(\theta) = \mathcal{L}_{\mathrm{PDE}} + \mathcal{L}_{\mathrm{BC}} + \mathcal{L}_{\mathrm{IC}}
+$$
 
 This approach was popularized by Raissi, Perdikaris, and Karniadakis (2019) for solving forward and inverse problems without labeled simulation data.
 
@@ -43,82 +43,83 @@ This approach was popularized by Raissi, Perdikaris, and Karniadakis (2019) for 
 
 Heat flux is proportional to the negative temperature gradient:
 
-\[
+$$
 q = -k \frac{\partial T}{\partial x}
-\]
+$$
 
-where \(k\) is thermal conductivity (W/m·K) and \(q\) is heat flux (W/m²).
+where $k$ is thermal conductivity (W/m·K) and $q$ is heat flux (W/m²).
 
 ### Conservation of Energy
 
 For a homogeneous medium with no internal heat generation, energy conservation gives the **heat diffusion equation**:
 
-\[
+$$
 \rho c_p \frac{\partial T}{\partial t} = \nabla \cdot (k \nabla T)
-\]
+$$
 
 where:
-- \(T\) — temperature (K or °C)
-- \(t\) — time (s)
-- \(\rho\) — density (kg/m³)
-- \(c_p\) — specific heat capacity (J/kg·K)
-- \(k\) — thermal conductivity (W/m·K)
+
+- $T$ — temperature (K or °C)
+- $t$ — time (s)
+- $\rho$ — density (kg/m³)
+- $c_p$ — specific heat capacity (J/kg·K)
+- $k$ — thermal conductivity (W/m·K)
 
 ### Thermal Diffusivity
 
 Define the **thermal diffusivity**:
 
-\[
-\alpha = \frac{k}{\rho c_p} \quad \text{(m²/s)}
-\]
+$$
+\alpha = \frac{k}{\rho c_p} \quad \mathrm{(m^2/s)}
+$$
 
-For constant \(k\), the equation simplifies to:
+For constant $k$, the equation simplifies to:
 
-\[
+$$
 \frac{\partial T}{\partial t} = \alpha \nabla^2 T
-\]
+$$
 
 ### 2D Form (This Project)
 
-On a 2D domain \(\Omega \subset \mathbb{R}^2\):
+On a 2D domain $\Omega \subset \mathbb{R}^2$:
 
-\[
-\boxed{
+**Governing equation:**
+
+$$
 \frac{\partial T}{\partial t} = \alpha \left( \frac{\partial^2 T}{\partial x^2} + \frac{\partial^2 T}{\partial y^2} \right)
-}
-\]
+$$
 
 This is a **parabolic PDE**: one time derivative and two spatial second derivatives.
 
 ### PDE Residual
 
-For PINN training, define the **residual** \(f\) that should vanish when \(T\) is an exact solution:
+For PINN training, define the **residual** $f$ that should vanish when $T$ is an exact solution:
 
-\[
-\boxed{
+$$
 f(x, y, t) = \frac{\partial T}{\partial t} - \alpha \left( \frac{\partial^2 T}{\partial x^2} + \frac{\partial^2 T}{\partial y^2} \right) = 0
-}
-\]
+$$
 
-At each interior collocation point \((x_i, y_i, t_i)\), the network output must satisfy \(f = 0\).
+At each interior collocation point $(x_i, y_i, t_i)$, the network output must satisfy $f = 0$.
 
 ---
 
 ## Problem Setup
 
-| Quantity | Value / Form |
-|----------|--------------|
-| **Spatial domain** | \(\Omega = [0, 1] \times [0, 1]\) |
-| **Time domain** | \(t \in [0, 1]\) |
-| **Thermal diffusivity** | \(\alpha = 0.01\) (default, normalized units) |
-| **Boundary condition** | Dirichlet: \(T = 0\) on \(\partial\Omega\) (cooled walls) |
-| **Initial condition** | Gaussian hot spot at center at \(t = 0\): |
+| Quantity | Description |
+|----------|-------------|
+| **Spatial domain** | Unit square, $x \in [0,1]$, $y \in [0,1]$ |
+| **Time domain** | $t \in [0, 1]$ |
+| **Thermal diffusivity** | $\alpha = 0.01$ (default, normalized units) |
+| **Boundary condition** | Dirichlet: $T = 0$ on all boundaries (cooled walls) |
+| **Initial condition** | Gaussian hot spot at the center at $t = 0$ |
 
-\[
-T(x, y, 0) = \exp\left( -\frac{(x - x_0)^2 + (y - y_0)^2}{2\sigma^2} \right)
-\]
+**Initial temperature profile:**
 
-Default: \(x_0 = y_0 = 0.5\), \(\sigma = 0.1\).
+$$
+T(x, y, 0) = \exp\!\left( -\frac{(x - x_0)^2 + (y - y_0)^2}{2\sigma^2} \right)
+$$
+
+Defaults: $x_0 = y_0 = 0.5$, $\sigma = 0.1$.
 
 **Physical interpretation:** A localized heat pulse at the center of a plate diffuses outward and is absorbed by the cold boundary walls over time.
 
@@ -128,19 +129,19 @@ Default: \(x_0 = y_0 = 0.5\), \(\sigma = 0.1\).
 
 The temperature field is approximated by a fully connected neural network (MLP):
 
-\[
+$$
 T_\theta(x, y, t) \approx T(x, y, t)
-\]
+$$
 
-where \(\theta\) denotes trainable weights and biases.
+where $\theta$ denotes trainable weights and biases.
 
 ### Architecture
 
 | Layer | Description |
 |-------|-------------|
-| Input | \((x, y, t) \in \mathbb{R}^3\) |
+| Input | $(x, y, t)$ — three spatial/temporal coordinates |
 | Hidden | 4 layers × 64 neurons, activation = tanh |
-| Output | \(T \in \mathbb{R}\) |
+| Output | Scalar temperature $T$ |
 
 The tanh activation is standard in PINNs because it produces smooth outputs suitable for high-order derivative computation via autodiff.
 
@@ -148,13 +149,13 @@ The tanh activation is standard in PINNs because it produces smooth outputs suit
 
 Spatial and temporal derivatives are computed using **automatic differentiation** (PyTorch `autograd`):
 
-\[
+$$
 \frac{\partial T_\theta}{\partial x}, \quad
 \frac{\partial T_\theta}{\partial y}, \quad
 \frac{\partial T_\theta}{\partial t}, \quad
 \frac{\partial^2 T_\theta}{\partial x^2}, \quad
 \frac{\partial^2 T_\theta}{\partial y^2}
-\]
+$$
 
 Second derivatives require nested autodiff (differentiate the first derivative with respect to the input coordinate).
 
@@ -164,50 +165,48 @@ Second derivatives require nested autodiff (differentiate the first derivative w
 
 The total training loss is a weighted sum of three mean-squared-error terms:
 
-\[
-\boxed{
-\mathcal{L}_{\text{total}} =
-\lambda_{\text{PDE}} \mathcal{L}_{\text{PDE}} +
-\lambda_{\text{BC}} \mathcal{L}_{\text{BC}} +
-\lambda_{\text{IC}} \mathcal{L}_{\text{IC}}
-}
-\]
+$$
+\mathcal{L}_{\mathrm{total}} =
+\lambda_{\mathrm{PDE}} \, \mathcal{L}_{\mathrm{PDE}} +
+\lambda_{\mathrm{BC}} \, \mathcal{L}_{\mathrm{BC}} +
+\lambda_{\mathrm{IC}} \, \mathcal{L}_{\mathrm{IC}}
+$$
 
-Default weights: \(\lambda_{\text{PDE}} = 1\), \(\lambda_{\text{BC}} = 10\), \(\lambda_{\text{IC}} = 10\).
+Default weights: $\lambda_{\mathrm{PDE}} = 1$, $\lambda_{\mathrm{BC}} = 10$, $\lambda_{\mathrm{IC}} = 10$.
 
 ### PDE Loss (Interior Collocation)
 
-Sample \(N_{\text{int}}\) points \((x_i, y_i, t_i)\) uniformly in \(\Omega \times [0,1]\):
+Sample $N_{\mathrm{int}}$ points $(x_i, y_i, t_i)$ uniformly in the interior of $\Omega \times [0,1]$:
 
-\[
-\mathcal{L}_{\text{PDE}} = \frac{1}{N_{\text{int}}} \sum_{i=1}^{N_{\text{int}}} \left| f(x_i, y_i, t_i; \theta) \right|^2
-\]
+$$
+\mathcal{L}_{\mathrm{PDE}} = \frac{1}{N_{\mathrm{int}}} \sum_{i=1}^{N_{\mathrm{int}}} \left| f(x_i, y_i, t_i; \theta) \right|^2
+$$
 
 where:
 
-\[
+$$
 f = \frac{\partial T_\theta}{\partial t} - \alpha \left( \frac{\partial^2 T_\theta}{\partial x^2} + \frac{\partial^2 T_\theta}{\partial y^2} \right)
-\]
+$$
 
 ### Boundary Condition Loss
 
-Sample \(N_{\text{bc}}\) points on \(\partial\Omega\) at random times:
+Sample $N_{\mathrm{bc}}$ points on the boundary $\partial\Omega$ at random times:
 
-\[
-\mathcal{L}_{\text{BC}} = \frac{1}{N_{\text{bc}}} \sum_{j=1}^{N_{\text{bc}}} \left| T_\theta(x_j, y_j, t_j) - T_{\text{bc}} \right|^2
-\]
+$$
+\mathcal{L}_{\mathrm{BC}} = \frac{1}{N_{\mathrm{bc}}} \sum_{j=1}^{N_{\mathrm{bc}}} \left| T_\theta(x_j, y_j, t_j) - T_{\mathrm{bc}} \right|^2
+$$
 
-With \(T_{\text{bc}} = 0\) (Dirichlet).
+With $T_{\mathrm{bc}} = 0$ (Dirichlet).
 
 ### Initial Condition Loss
 
-Sample \(N_{\text{ic}}\) points in \(\Omega\) at \(t = 0\):
+Sample $N_{\mathrm{ic}}$ points in $\Omega$ at $t = 0$:
 
-\[
-\mathcal{L}_{\text{IC}} = \frac{1}{N_{\text{ic}}} \sum_{k=1}^{N_{\text{ic}}} \left| T_\theta(x_k, y_k, 0) - T_{\text{ic}}(x_k, y_k) \right|^2
-\]
+$$
+\mathcal{L}_{\mathrm{IC}} = \frac{1}{N_{\mathrm{ic}}} \sum_{k=1}^{N_{\mathrm{ic}}} \left| T_\theta(x_k, y_k, 0) - T_{\mathrm{ic}}(x_k, y_k) \right|^2
+$$
 
-where \(T_{\text{ic}}\) is the Gaussian hot-spot profile defined above.
+where $T_{\mathrm{ic}}$ is the Gaussian hot-spot profile defined above.
 
 ---
 
@@ -232,7 +231,7 @@ where \(T_{\text{ic}}\) is the Gaussian hot-spot profile defined above.
 | Boundary points | 1024 |
 | Initial points | 1024 |
 | Epochs | 5000 |
-| Learning rate | 1×10⁻³ |
+| Learning rate | $1 \times 10^{-3}$ |
 | Optimizer | Adam |
 | LR scheduler | StepLR (×0.5 every 2000 epochs) |
 
@@ -291,7 +290,7 @@ After training, results are saved to `outputs/`:
 | File | Description |
 |------|-------------|
 | `heat_pinn.pt` | Model checkpoint (weights + config) |
-| `temperature_snapshots.png` | Temperature field at \(t = 0, 0.1, 0.25, 0.5, 1.0\) |
+| `temperature_snapshots.png` | Temperature field at $t = 0, 0.1, 0.25, 0.5, 1.0$ |
 | `loss_history.png` | PDE, BC, IC, and total loss vs. epoch |
 
 ---
