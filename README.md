@@ -7,15 +7,16 @@ A **Physics-Informed Neural Network (PINN)** for **2D transient heat conduction*
 ## Table of Contents
 
 1. [What is a PINN?](#what-is-a-pinn)
-2. [Governing Physics](#governing-physics)
-3. [Problem Setup](#problem-setup)
-4. [Neural Network Approximation](#neural-network-approximation)
-5. [Loss Function](#loss-function)
-6. [Training Algorithm](#training-algorithm)
-7. [Installation (Conda)](#installation-conda)
-8. [Usage](#usage)
-9. [Project Structure](#project-structure)
-10. [References](#references)
+2. [Results](#results)
+3. [Governing Physics](#governing-physics)
+4. [Problem Setup](#problem-setup)
+5. [Neural Network Approximation](#neural-network-approximation)
+6. [Loss Function](#loss-function)
+7. [Training Algorithm](#training-algorithm)
+8. [Installation (Conda)](#installation-conda)
+9. [Usage](#usage)
+10. [Project Structure](#project-structure)
+11. [References](#references)
 
 ---
 
@@ -34,6 +35,20 @@ $$
 $$
 
 This approach was popularized by Raissi, Perdikaris, and Karniadakis (2019) for solving forward and inverse problems without labeled simulation data.
+
+---
+
+## Results
+
+Example output after training for 10,000 epochs ($\alpha = 0.01$):
+
+**Temperature field** — a Gaussian hot spot at the center diffuses outward and is absorbed by the cooled boundaries ($T = 0$):
+
+![Temperature snapshots at t = 0, 0.1, 0.25, 0.5, 1.0](docs/images/temperature_snapshots.png)
+
+**Training convergence** — PDE, boundary, initial, and total loss vs. epoch:
+
+![PINN training loss history](docs/images/loss_history.png)
 
 ---
 
@@ -299,6 +314,8 @@ After training, results are saved to `outputs/`:
 
 ```
 thermal-pinn/
+├── docs/
+│   └── images/           # Example figures for README
 ├── environment.yml       # Conda environment specification
 ├── requirements.txt      # Pip fallback dependencies
 ├── main.py               # CLI entry point
